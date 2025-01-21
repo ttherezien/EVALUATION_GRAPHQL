@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base
 
 
-DATABASE_URI = "sqlite:///./students.db"
+DATABASE_URI = "sqlite:///./database.db"
 engine = create_engine(DATABASE_URI)
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
