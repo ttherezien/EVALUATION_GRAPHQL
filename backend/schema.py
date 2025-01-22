@@ -11,13 +11,8 @@ from database import get_db
 import jwt
 from datetime import datetime, timedelta
 
-
-
 algorithm = 'HS256'
-
 SECRET_KEY = "your_very_secret_key"
-
-
 
 @strawberry.type
 class UserType:
@@ -29,7 +24,7 @@ class UserType:
 class ProjectType:
     id: int
     name: str
-    description: str
+    description: str 
     owner_id: int
 
 
@@ -72,32 +67,11 @@ class Query:
         projects = db.query(Project).filter(Project.owner_id == user.id).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
     
-    @strawberry.field
-    async def connexion(self, email: str, password: str) -> UserType:
-        db=get_db()
-        user = db.query(User).filter(User.email == email, User.password == password).first()
-        return UserType(id=user.id, email=user.email)
         
 
 
 @strawberry.type
 class Mutation:
-    @strawberry.mutation
-    async def add_user(self, email: str, password: str) -> UserType:
-        db=get_db()
-        user = User(email=email, password=password)
-        db.add(user)
-        db.commit()
-        return UserType(id=user.id, email=user.email)
-
-    @strawberry.mutation
-    async def add_project(self, name: str, description: str, owner_id: int) -> ProjectType:
-        db=get_db()
-        project = Project(name=name, description=description, owner_id=owner_id)
-        db.add(project)
-        db.commit()
-        return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
-
     @strawberry.mutation
     async def signup(self, email: str, password: str) -> UserType:
         db=get_db()
@@ -130,6 +104,15 @@ class Mutation:
             return UserType(id=user.id, email=user.email,token=token)
         else:
             raise Exception("Invalid credentials")
+        
+    @strawberry.mutation
+    async def create_project(self, name: str, description: str, info: Info) -> ProjectType:
+        user = await get_current_user(info)
+        db=get_db()
+        project = Project(name=name, description=description, owner_id=user.id)
+        db.add(project)
+        db.commit()
+        return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
 
     
 
@@ -158,5 +141,8 @@ class Subscription:
                 last_user_id = user.id
                 yield UserType(id=user.id, email=user.email)
             await asyncio.sleep(1)
+            
+            
+    
 
 

@@ -4,10 +4,22 @@ import { ProjectCard } from '../components/ProjectCard';
 import { useQuery, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useMutation } from '@apollo/client';
 
 const GET_PROJECTS = gql`
   query GetProjects {
     projects {
+      id
+      name
+      description
+    }
+  }
+`;
+
+
+const CREATE_PROJECT = gql`
+  mutation CreateProject($name: String!, $description: String!) {
+    createProject(name: $name, description: $description) {
       id
       name
       description
@@ -32,9 +44,18 @@ export const ProjectsPage = () => {
     }
   }, [navigate, refetch]);
 
+  const [createProject] = useMutation(CREATE_PROJECT);
+
   const handleNewProject = () => {
-    alert('TODO: Implémenter la mutation de création de projet');
-  };
+    createProject({
+      variables: {
+        name: 'Nouveau Projet',
+        description: 'Description du nouveau projet',
+      },
+    }).then(() => {
+      refetch();
+    });
+  }
 
   if (loading) return <p>Chargement des projets...</p>;
   if (error) return <p>Erreur lors du chargement des projets : {error.message}</p>;

@@ -7,12 +7,10 @@ import './index.css';
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
-// Créer un lien HTTP pour l'API GraphQL
 const httpLink = createHttpLink({
   uri: 'http://localhost:8000/graphql',
 });
 
-// Middleware pour ajouter dynamiquement l'entête Authorization
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('token'); // Récupérer le token dynamiquement (par exemple, depuis localStorage)
   return {
@@ -23,7 +21,6 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-// Fusionner les deux links (auth et http)
 const client = new ApolloClient({
   link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
