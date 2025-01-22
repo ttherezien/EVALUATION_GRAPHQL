@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { gql, useMutation } from '@apollo/client';
 
 export const SignupPage = () => {
   const navigate = useNavigate();
@@ -12,10 +13,29 @@ export const SignupPage = () => {
     });
   };
 
+  const [signup] = useMutation(gql`
+    mutation signup($email: String!, $password: String!) {
+      signup(email: $email, password: $password) {
+        token
+      }
+    }`
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/login');
-    alert('TODO: Implémenter la mutation signup');
+    try {
+      const { data } = await signup({
+        variables: formData,
+      });
+
+      localStorage.setItem('token', data.signup.token);
+
+      if (localStorage.getItem('token') !== null) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during signup:', error);
+    }
   };
 
   return (
@@ -44,6 +64,7 @@ export const SignupPage = () => {
         </div>
         <button 
           type="submit"
+          onClick={handleSubmit}
           className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           S&apos;inscrire

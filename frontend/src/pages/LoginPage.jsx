@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { gql, useMutation } from '@apollo/client';
 
 export const LoginPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
+
+  const loginMutation = gql`
+    mutation login($email: String!, $password: String!) {
+      login(email: $email, password: $password) {
+        token
+      }
+   }`;
+   
+  const [login] = useMutation(loginMutation);
 
   const handleChange = (e) => {
     setFormData({
@@ -13,9 +23,25 @@ export const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
+    const email = formData.email;
+    const password = formData.password;
     e.preventDefault();
-    navigate('/');
-    alert('TODO: Implémenter la mutation login');
+    try {
+      const { data } = await login({
+        variables: {
+          email,
+          password
+        },
+      });
+
+      localStorage.setItem('token', data.login.token);
+
+      if (localStorage.getItem('token') !== null) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during login :', error);
+    }
   };
 
   return (
@@ -55,6 +81,7 @@ export const LoginPage = () => {
           Inscrivez-vous
         </Link>
       </p>
+      <p>{formData.email} {formData.password}</p>
     </div>
   );
 }

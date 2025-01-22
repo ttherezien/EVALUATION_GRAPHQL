@@ -2,9 +2,18 @@ import { Link, useParams } from 'react-router-dom';
 import {TaskItem} from '../components/TaskItem';
 import {CommentList} from '../components/CommentList';
 import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (localStorage.getItem('token') === null) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   // Stub de données
   const project = {

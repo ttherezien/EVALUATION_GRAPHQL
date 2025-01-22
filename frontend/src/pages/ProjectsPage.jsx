@@ -1,17 +1,45 @@
 import { Link } from 'react-router-dom';
 import { PlusCircle, Search } from 'lucide-react';
 import { ProjectCard } from '../components/ProjectCard';
+import { useQuery, gql } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+
+const GET_PROJECTS = gql`
+  query GetProjects {
+    projects {
+      id
+      name
+      description
+    }
+  }
+`;
+
+
 
 export const ProjectsPage = () => {
-  // Stub de données (à enlever quand la query fonctionne)
-  const projects = [
-    { id: '1', name: 'Projet 1', description: 'Description du projet 1' },
-    { id: '2', name: 'Projet 2', description: 'Description du projet 2' },
-  ];
+  console.log(localStorage.getItem('token'));
+
+
+  const { data, loading, error, refetch } = useQuery(GET_PROJECTS);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/login');
+    } else {
+      refetch();
+    }
+  }, [navigate, refetch]);
 
   const handleNewProject = () => {
     alert('TODO: Implémenter la mutation de création de projet');
   };
+
+  if (loading) return <p>Chargement des projets...</p>;
+  if (error) return <p>Erreur lors du chargement des projets : {error.message}</p>;
+
+  const projects = data?.projects || [];
 
   return (
     <div>
@@ -49,4 +77,4 @@ export const ProjectsPage = () => {
       </div>
     </div>
   );
-}
+};
