@@ -29,10 +29,10 @@ const CREATE_PROJECT = gql`
 
 
 
+
+
+
 export const ProjectsPage = () => {
-  console.log(localStorage.getItem('token'));
-
-
   const { data, loading, error, refetch } = useQuery(GET_PROJECTS);
   const navigate = useNavigate();
 

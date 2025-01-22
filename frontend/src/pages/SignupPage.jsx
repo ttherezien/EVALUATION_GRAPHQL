@@ -13,13 +13,15 @@ export const SignupPage = () => {
     });
   };
 
-  const [signup] = useMutation(gql`
+  const MUTATION_SIGNUP = gql`
     mutation signup($email: String!, $password: String!) {
       signup(email: $email, password: $password) {
         token
       }
-    }`
-  );
+    }
+  `;
+
+  const [signup, { error }] = useMutation(MUTATION_SIGNUP);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ export const SignupPage = () => {
         navigate('/');
       }
     } catch (error) {
-      console.error('Error during signup:', error);
+      return
     }
   };
 
@@ -76,6 +78,7 @@ export const SignupPage = () => {
           Connectez-vous
         </Link>
       </p>
+      {error && <p className="text-red-500 text-center mt-4">Erreur lors de l&apos;inscription</p>}
     </div>
   );
 }

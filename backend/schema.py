@@ -67,7 +67,10 @@ class Query:
         projects = db.query(Project).filter(Project.owner_id == user.id).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
     
-        
+    @strawberry.field
+    async def getUser(self,info:Info) -> UserType:
+        user = await get_current_user(info)
+        return user
 
 
 @strawberry.type

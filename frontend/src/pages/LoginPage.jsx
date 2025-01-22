@@ -12,8 +12,8 @@ export const LoginPage = () => {
         token
       }
    }`;
-   
-  const [login] = useMutation(loginMutation);
+
+  const [login, { error }] = useMutation(loginMutation);
 
   const handleChange = (e) => {
     setFormData({
@@ -28,10 +28,7 @@ export const LoginPage = () => {
     e.preventDefault();
     try {
       const { data } = await login({
-        variables: {
-          email,
-          password
-        },
+        variables: { email, password },
       });
 
       localStorage.setItem('token', data.login.token);
@@ -39,8 +36,8 @@ export const LoginPage = () => {
       if (localStorage.getItem('token') !== null) {
         navigate('/');
       }
-    } catch (error) {
-      console.error('Error during login :', error);
+    } catch (e) {
+      return
     }
   };
 
@@ -81,7 +78,7 @@ export const LoginPage = () => {
           Inscrivez-vous
         </Link>
       </p>
-      <p>{formData.email} {formData.password}</p>
+      {error && <p className="text-red-500 text-sm mt-4">Erreur lors de la connexion : {error.message}</p>}
     </div>
   );
 }

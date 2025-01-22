@@ -6,15 +6,6 @@ import { useNavigate } from 'react-router-dom';
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
-  const navigate = useNavigate();
-
-
-  useEffect(() => {
-    if (localStorage.getItem('token') === null) {
-      navigate('/login');
-    }
-  }, [navigate]);
-
   // Stub de données
   const project = {
     id: projectId,
