@@ -5,7 +5,7 @@ from strawberry import Schema
 from strawberry.types import Info
 
 
-from models import User, Project
+from models import User, Project, Task, Comment
 from database import get_db
 
 import jwt
@@ -26,6 +26,33 @@ class ProjectType:
     name: str
     description: str 
     owner_id: int
+    
+   
+@strawberry.type
+class TaskType:
+    id: int
+    title: str
+    status: str
+    project_id: int
+    
+    
+@strawberry.type
+class CommentType:
+    id: int
+    content: str
+    author_id: int
+    project_id: int
+    task_id: int   
+   
+ 
+@strawberry.type
+class ProjectDetail:
+    id: int
+    name: str
+    description: str
+    owner: UserType
+    tasks: List[TaskType]
+    comments: List[CommentType]
 
 
 def verify_token(token: str):
@@ -71,6 +98,16 @@ class Query:
     async def getUser(self,info:Info) -> UserType:
         user = await get_current_user(info)
         return user
+    
+    @strawberry.field
+    async def getProject(self, id: int, info:Info) -> ProjectDetail:
+        user = await get_current_user(info)
+        db=get_db()
+        project = db.query(Project).filter(Project.id == id).first()
+        tasks = db.query(Task).filter(Task.project_id == id).all()
+        comments = db.query(Comment).filter(Comment.project_id == id).all()
+        owner = db.query(User).filter(User.id == project.owner_id).first()
+        return ProjectDetail(id=project.id, name=project.name, description=project.description, owner=UserType(id=owner.id, email=owner.email), tasks=[TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id) for task in tasks], comments=[CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) for comment in comments])
 
 
 @strawberry.type
@@ -84,7 +121,7 @@ class Mutation:
         payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(hours=1)
+            'exp': datetime.utcnow() + timedelta(minutes=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         
@@ -99,7 +136,7 @@ class Mutation:
             payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(hours=1)
+            'exp': datetime.utcnow() + timedelta(minutes=1)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
             db.commit()

@@ -3,11 +3,15 @@ import {TaskItem} from '../components/TaskItem';
 import {CommentList} from '../components/CommentList';
 import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { gql } from '@apollo/client';
+
+import { useEffect } from 'react';
+
 
 export const ProjectDetailsPage = () => {
-  const { projectId } = useParams();
+  //const { projectId } = useParams();
   // Stub de données
-  const project = {
+  const project2 = {
     id: projectId,
     name: 'Projet exemple',
     description: 'Description du projet exemple.',
@@ -23,6 +27,39 @@ export const ProjectDetailsPage = () => {
       },
     ],
   };
+
+  const GETPROJECTBYID = gql`
+    query GetProjectById($id: ID!) {
+      getProject(id: $id) {
+        id
+        name
+        description
+        tasks {
+          id
+          title
+          status
+        }
+        comments {
+          id
+          content
+          author {
+            email
+          }
+        }
+      }
+    }
+  `;
+
+  const { loading, error, data } = useQuery(GETPROJECTBYID, {
+    variables: { id: projectId },
+  });
+
+  const project = data.getProject;
+  
+
+
+
+
 
   const handleAddTask = () => {
     alert('TODO: Mutation pour ajouter une nouvelle tâche');
