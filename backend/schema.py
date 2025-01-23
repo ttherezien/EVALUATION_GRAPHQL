@@ -100,14 +100,22 @@ class Query:
         return user
     
     @strawberry.field
-    async def getProject(self, id: int, info:Info) -> ProjectDetail:
-        user = await get_current_user(info)
-        db=get_db()
+    async def getProject(self, id: int) -> ProjectDetail:
+        print("getProject")
+        #user = await get_current_user(info)
+        db = get_db()
         project = db.query(Project).filter(Project.id == id).first()
-        tasks = db.query(Task).filter(Task.project_id == id).all()
-        comments = db.query(Comment).filter(Comment.project_id == id).all()
-        owner = db.query(User).filter(User.id == project.owner_id).first()
-        return ProjectDetail(id=project.id, name=project.name, description=project.description, owner=UserType(id=owner.id, email=owner.email), tasks=[TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id) for task in tasks], comments=[CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) for comment in comments])
+        #if project and (project.owner_id == user.id):
+        if not project:
+            raise Exception(f"Project with ID {id} not found")
+
+        if project:
+            owner = db.query(User).filter(User.id == project.owner_id).first()
+            tasks = db.query(Task).filter(Task.project_id == project.id).all()
+            comments = db.query(Comment).filter(Comment.project_id == project.id).all()
+            return ProjectDetail(id=project.id, name=project.name, description=project.description, owner=UserType(id=owner.id, email=owner.email), tasks=[TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id) for task in tasks], comments=[CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) for comment in comments])
+        else:
+            raise Exception("Project not found")
 
 
 @strawberry.type
@@ -121,7 +129,7 @@ class Mutation:
         payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(minutes=1)
+            'exp': datetime.utcnow() + timedelta(hours=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         
@@ -136,7 +144,7 @@ class Mutation:
             payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(minutes=1)
+            'exp': datetime.utcnow() + timedelta(hours=1)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
             db.commit()

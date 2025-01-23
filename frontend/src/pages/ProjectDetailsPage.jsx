@@ -2,64 +2,57 @@ import { Link, useParams } from 'react-router-dom';
 import {TaskItem} from '../components/TaskItem';
 import {CommentList} from '../components/CommentList';
 import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { gql } from '@apollo/client';
-
+import { useQuery } from '@apollo/client';
 import { useEffect } from 'react';
 
 
-export const ProjectDetailsPage = () => {
-  //const { projectId } = useParams();
-  // Stub de données
-  const project2 = {
-    id: projectId,
-    name: 'Projet exemple',
-    description: 'Description du projet exemple.',
-    tasks: [
-      { id: 't1', title: 'Tâche 1', status: 'TODO' },
-      { id: 't2', title: 'Tâche 2', status: 'IN_PROGRESS' },
-    ],
-    comments: [
-      {
-        id: 'c1',
-        content: 'Premier commentaire',
-        author: { email: 'test@test.com' },
-      },
-    ],
-  };
-
-  const GETPROJECTBYID = gql`
-    query GetProjectById($id: ID!) {
-      getProject(id: $id) {
+const GETPROJECTBYID = gql`
+  query GetProject($id: Int!) { 
+    getProject(id: $id) {
+      id
+      name
+      description
+      comments {
+        authorId
+        content
         id
-        name
-        description
-        tasks {
-          id
-          title
-          status
-        }
-        comments {
-          id
-          content
-          author {
-            email
-          }
-        }
+        projectId
+        taskId
+      }
+      tasks {
+        id
+        status
+        title
       }
     }
-  `;
+  }
+`;
+
+
+export const ProjectDetailsPage = () => {
+  const { projectId } = useParams();
+  const projectIdInt = parseInt(projectId, 10);
 
   const { loading, error, data } = useQuery(GETPROJECTBYID, {
-    variables: { id: projectId },
+    variables: { id: projectIdInt },
   });
 
-  const project = data.getProject;
-  
+  const project = data?.getProject || {};
 
+  if (loading) {
+    console.log("Loading project details...");
+    return <p>Chargement du projet...</p>;
+  }
 
+  if (error) {
+    console.error("Error fetching project details:", error.message);
+    return <p>Erreur : {error.message}</p>;
+  }
 
-
+  if (data) {
+    console.log("Fetched project details:", data);
+  }
 
   const handleAddTask = () => {
     alert('TODO: Mutation pour ajouter une nouvelle tâche');
