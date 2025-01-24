@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, AsyncGenerator
+from typing import List, AsyncGenerator, Optional
 import strawberry
 from strawberry import Schema
 from strawberry.types import Info
@@ -100,16 +100,15 @@ class Query:
         return user
     
     @strawberry.field
-    async def getProject(self, id: int) -> ProjectDetail:
-        print("getProject")
-        #user = await get_current_user(info)
+    async def getProject(self, id: int,info : Info) -> ProjectDetail:
+        user = await get_current_user(info)
         db = get_db()
         project = db.query(Project).filter(Project.id == id).first()
-        #if project and (project.owner_id == user.id):
+        
         if not project:
             raise Exception(f"Project with ID {id} not found")
 
-        if project:
+        if project and (project.owner_id == user.id):
             owner = db.query(User).filter(User.id == project.owner_id).first()
             tasks = db.query(Task).filter(Task.project_id == project.id).all()
             comments = db.query(Comment).filter(Comment.project_id == project.id).all()
@@ -162,7 +161,45 @@ class Mutation:
         db.commit()
         return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
 
-    
+    @strawberry.mutation
+    async def create_task(self, project_id: int, title: str, status: str, info: Info) -> TaskType:
+        user = await get_current_user(info)
+        db = get_db()
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise Exception("Project not found or you do not have permission to add tasks to this project")
+        task = Task(title=title, status=status, project_id=project_id)
+        db.add(task)
+        db.commit()
+        return TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id)
+
+    @strawberry.mutation
+    async def update_project(
+        self,
+        project_id: int,
+        info: Info,
+        name: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> ProjectType:
+        
+        print("update_project")
+        user = await get_current_user(info)
+        db = get_db()
+
+        project = db.query(Project).filter(Project.id == project_id, Project.owner_id == user.id).first()
+        if not project:
+            raise Exception("Project not found or you do not have permission to update this project")
+
+        # Mise à jour uniquement des champs fournis
+        if name is not None:
+            project.name = name
+        if description is not None:
+            project.description = description
+
+        db.commit()
+        db.refresh(project)
+
+        return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
 
 
 @strawberry.type

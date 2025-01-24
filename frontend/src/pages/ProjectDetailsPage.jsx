@@ -3,8 +3,9 @@ import {TaskItem} from '../components/TaskItem';
 import {CommentList} from '../components/CommentList';
 import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar } from 'lucide-react';
 import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client';
+import { useQuery,useMutation } from '@apollo/client';
 import { useEffect } from 'react';
+import { useState } from 'react';
 
 
 const GETPROJECTBYID = gql`
@@ -30,13 +31,43 @@ const GETPROJECTBYID = gql`
 `;
 
 
+const CREATETASK = gql`
+  mutation CreateTask($projectId: Int!, $title: String!, $status: String!) {
+    createTask(projectId: $projectId, title: $title, status: $status) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+const UPDATEPROJECTNAME = gql`
+  mutation UpdateProject($projectId: Int!, $name: String!) {
+    updateProject(projectId: $projectId, name: $name) {
+      id
+      name
+      description
+    }
+  }
+`;
+
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
+
+  
+
+
   const projectIdInt = parseInt(projectId, 10);
 
-  const { loading, error, data } = useQuery(GETPROJECTBYID, {
+  const { loading, error, data, refetch } = useQuery(GETPROJECTBYID, {
     variables: { id: projectIdInt },
   });
+
+  const [projectname, setProjectname] = useState('');
+
+  const [createTask] = useMutation(CREATETASK);
+  const [updateProject] = useMutation(UPDATEPROJECTNAME);
+
 
   const project = data?.getProject || {};
 
@@ -54,13 +85,56 @@ export const ProjectDetailsPage = () => {
     console.log("Fetched project details:", data);
   }
 
-  const handleAddTask = () => {
-    alert('TODO: Mutation pour ajouter une nouvelle tâche');
+  const handleAddTask = async () => {
+    try {
+      await createTask({
+        variables: {
+          projectId: projectIdInt,
+          title: 'Nouvelle tâche',
+          status: 'TODO',
+        },
+      });
+      console.log("Task created");
+      refetch();
+    } catch (error) {
+      console.error("Error creating task:", error.message);
+    }
   };
+
+  const modifyProjectName = async () => {
+    try {
+      await updateProject({
+        variables: {
+          projectId: projectIdInt,
+          name: projectname,
+        },
+      });
+      console.log("Project name updated");
+      refetch();
+    } catch (error) {
+      console.error("Error updating project name:", error.message);
+    }
+  };
+    
+
+
 
   const handleAddComment = () => {
     alert('TODO: Mutation pour ajouter un nouveau commentaire');
   };
+
+
+
+  useEffect(() => {
+    if (data?.getProject?.name) {
+      setProjectname(data.getProject.name);
+    }
+  }, [data]);
+  
+
+
+
+
 
   return (
     <div>
@@ -76,7 +150,7 @@ export const ProjectDetailsPage = () => {
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">{project.name}</h2>
+              <input className="text-3xl font-bold text-gray-900 mb-2" value={projectname} onChange={(e) => setProjectname(e.target.value)} onBlur={() => modifyProjectName()} />
               <p className="text-gray-600">{project.description}</p>
             </div>
             <div className="flex items-center text-sm text-gray-500">
