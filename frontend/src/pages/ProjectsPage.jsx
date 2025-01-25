@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Trash } from 'lucide-react';
 import { ProjectCard } from '../components/ProjectCard';
 import { useQuery, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
@@ -28,7 +28,13 @@ const CREATE_PROJECT = gql`
 `;
 
 
-
+const deleteProject = gql`
+  mutation DeleteProject($projectId: Int!) {
+    deleteProject(projectId: $projectId) {
+      id
+    }
+  }
+`;
 
 
 

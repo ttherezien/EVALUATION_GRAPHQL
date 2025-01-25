@@ -30,7 +30,6 @@ const GETPROJECTBYID = gql`
   }
 `;
 
-
 const CREATETASK = gql`
   mutation CreateTask($projectId: Int!, $title: String!, $status: String!) {
     createTask(projectId: $projectId, title: $title, status: $status) {
@@ -41,15 +40,18 @@ const CREATETASK = gql`
   }
 `;
 
-const UPDATEPROJECTNAME = gql`
-  mutation UpdateProject($projectId: Int!, $name: String!) {
-    updateProject(projectId: $projectId, name: $name) {
+
+
+const UPDATEPROJECT = gql`
+  mutation UpdateProject($projectId: Int!, $name: String!, $description: String!) {
+    updateProject(projectId: $projectId, name: $name, description: $description) {
       id
       name
       description
     }
   }
 `;
+
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
@@ -64,9 +66,17 @@ export const ProjectDetailsPage = () => {
   });
 
   const [projectname, setProjectname] = useState('');
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    if (data?.getProject) {
+      setProjectname(data.getProject.name);
+      setDescription(data.getProject.description);
+    }
+  }, [data]);
 
   const [createTask] = useMutation(CREATETASK);
-  const [updateProject] = useMutation(UPDATEPROJECTNAME);
+  const [updateProject] = useMutation(UPDATEPROJECT);
 
 
   const project = data?.getProject || {};
@@ -101,12 +111,13 @@ export const ProjectDetailsPage = () => {
     }
   };
 
-  const modifyProjectName = async () => {
+  const modifyProject = async () => {
     try {
       await updateProject({
         variables: {
           projectId: projectIdInt,
           name: projectname,
+          description: description,
         },
       });
       console.log("Project name updated");
@@ -122,16 +133,11 @@ export const ProjectDetailsPage = () => {
   const handleAddComment = () => {
     alert('TODO: Mutation pour ajouter un nouveau commentaire');
   };
+  let i = 0;
 
 
 
-  useEffect(() => {
-    if (data?.getProject?.name) {
-      setProjectname(data.getProject.name);
-    }
-  }, [data]);
   
-
 
 
 
@@ -149,9 +155,9 @@ export const ProjectDetailsPage = () => {
       <div className="space-y-8">
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <div className="flex justify-between items-start mb-4">
-            <div>
-              <input className="text-3xl font-bold text-gray-900 mb-2" value={projectname} onChange={(e) => setProjectname(e.target.value)} onBlur={() => modifyProjectName()} />
-              <p className="text-gray-600">{project.description}</p>
+            <div className='flex flex-col'>
+              <input className="text-3xl font-bold text-gray-900 mb-2 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre un titre' value={projectname} onChange={(e) => setProjectname(e.target.value)} onBlur={() => modifyProject()} />
+              <input className="text-gray-700 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre une description' value={description} onChange={(e) => setDescription(e.target.value)} onBlur={() => modifyProject()} />
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Calendar className="h-4 w-4 mr-1" />
@@ -177,7 +183,7 @@ export const ProjectDetailsPage = () => {
           <ul className="space-y-3">
             {project.tasks.map((task) => (
               <li key={task.id}>
-                <TaskItem task={task} />
+                <TaskItem task={task} refetchFunction={refetch} />
               </li>
             ))}
           </ul>

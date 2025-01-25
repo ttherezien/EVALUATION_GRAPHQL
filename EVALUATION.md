@@ -152,3 +152,60 @@ Pour la partie serveur, vous allez utiliser **FastAPI** et **Python** pour const
 ---
 
 Amusez vous bien ! 
+
+
+
+
+## Checklist des tâches à réaliser
+
+- [ ] **Gestion des utilisateurs**
+   - [X] Création d’un utilisateur (inscription)
+   - [ ] Lecture (profil)
+   - [ ] Mise à jour (optionnelle)
+   - [ ] Suppression (optionnelle)
+   - [X] Authentification basique (connexion)
+
+- [ ] **Gestion des projets**
+   - [X] Création
+   - [X] Consultation (liste + détail)
+   - [ ] Mise à jour
+   - [ ] Suppression
+
+- [ ] **Gestion des tâches**
+   - [X] Création
+   - [ ] Consultation (par projet ou globale)
+   - [ ] Mise à jour
+   - [ ] Suppression
+   - [ ] Gestion du statut (ex. « To Do », « In Progress », « Done »)
+
+- [ ] **Gestion des commentaires**
+   - [ ] Création
+   - [ ] Consultation
+   - [ ] Mise à jour
+   - [ ] Suppression
+
+- [ ] **Recherche / Filtrage** (optionnel)
+   - [ ] Champ de recherche pour filtrer par nom de projet ou titre de tâche
+   - [ ] Filtrage des tâches par statut
+
+
+- [X] **Partie Serveur (Apollo Server)**
+   - [X] Définition du schéma GraphQL (types, queries, mutations)
+   - [X] Implémentation des resolvers
+   - [X] Gestion de l’authentification avec un token (JWT)
+   - [X] Configuration de la base de données SQLite
+
+- [ ] **Livrables**
+   - [ ] Code source sur un dépôt Git
+   - [ ] Fichier `README.md` avec guide d’installation, aperçu des fonctionnalités, et détails du schéma
+
+- [ ] **Critères d’évaluation**
+   - [ ] Qualité du schéma GraphQL
+   - [ ] Intégration d’Apollo Client
+   - [ ] Structure et clarté du code
+   - [ ] Exhaustivité du CRUD
+   - [ ] Documentation & présentation
+
+- [ ] **Points bonus**
+   - [ ] Utilisation de subscriptions pour le temps réel
+   - [ ] Tests unitaires ou d’intégration

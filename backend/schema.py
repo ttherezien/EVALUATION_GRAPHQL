@@ -201,6 +201,79 @@ class Mutation:
 
         return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
 
+    @strawberry.mutation
+    async def update_task(
+        self,
+        task_id: int,
+        info: Info,
+        title: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> TaskType:
+        user = await get_current_user(info)
+        db = get_db()
+
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if not task:
+            raise Exception("Task not found")
+
+        project = db.query(Project).filter(Project.id == task.project_id).first()
+        if not project or project.owner_id != user.id:
+            raise Exception("Project not found or you do not have permission to update this task")
+
+        if title is not None:
+            task.title = title
+        if status is not None:
+            task.status = status
+
+        db.commit()
+        db.refresh(task)
+
+        return TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id)
+    
+    
+    @strawberry.mutation
+    async def delete_task(self, task_id: int, info: Info) -> TaskType:
+        user = await get_current_user(info)
+        db = get_db()
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if not task:
+            raise Exception("Task not found")
+        project = db.query(Project).filter(Project.id == task.project_id).first()
+        if not project or project.owner_id != user.id:
+            raise Exception("Project not found or you do not have permission to delete this task")
+        db.delete(task)
+        db.commit()
+        return TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id)
+
+
+    @strawberry.mutation
+    async def delete_project(self, project_id: int, info: Info) -> ProjectType:
+        """
+        Supprimer un projet
+        ainsi que toutes les tâches et les commentaires associés
+        """
+        user = await get_current_user(info)
+        db = get_db()
+        project = db.query(Project).filter(Project.id == project_id).first()
+        
+        if not project:
+            raise Exception("Project not found")
+        if project.owner_id != user.id:
+            raise Exception("You do not have permission to delete this project")
+        tasks = db.query(Task).filter(Task.project_id == project_id).all()
+        comments = db.query(Comment).filter(Comment.project_id == project_id).all()
+        
+        for task in tasks:
+            db.delete(task)
+        for comment in comments:
+            db.delete(comment)
+        db.delete(project)
+        db.commit()
+        return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
+        
+
+
+
 
 @strawberry.type
 class Subscription:
