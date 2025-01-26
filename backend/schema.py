@@ -128,7 +128,7 @@ class Mutation:
         payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(hours=1)
+            'exp': datetime.utcnow() + timedelta(hours=10)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         
@@ -271,7 +271,21 @@ class Mutation:
         db.commit()
         return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
         
-
+    @strawberry.mutation
+    async def create_comment(self, project_id: int, task_id: int, content: str, info: Info) -> CommentType:
+        user = await get_current_user(info)
+        db = get_db()
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise Exception("Project not found")
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if not task:
+            raise Exception("Task not found")
+        comment = Comment(content=content, author_id=user.id, project_id=project_id, task_id=task_id)
+        db.add(comment)
+        db.commit()
+        return CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) 
+    
 
 
 

@@ -43,11 +43,15 @@ export const ProjectsPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    refetch();
     if (!localStorage.getItem('token')) {
       navigate('/login');
-    } else {
-      refetch();
     }
+    if (error) {
+      localStorage.removeItem('token');
+    }
+    console.log(data);
+    
   }, [navigate, refetch]);
 
   const [createProject] = useMutation(CREATE_PROJECT);
@@ -60,12 +64,13 @@ export const ProjectsPage = () => {
       },
     }).then(() => {
       refetch();
+    }).catch((error) => {
+      return alert(error);
     });
   }
 
   if (loading) return <p>Chargement des projets...</p>;
-  if (error) return <p>Erreur lors du chargement des projets : {error.message}</p>;
-
+  
   const projects = data?.projects || [];
 
   return (
@@ -98,7 +103,7 @@ export const ProjectsPage = () => {
             to={`/projects/${project.id}`}
             className="block hover:no-underline"
           >
-            <ProjectCard project={project} />
+            <ProjectCard project={project}  />
           </Link>
         ))}
       </div>

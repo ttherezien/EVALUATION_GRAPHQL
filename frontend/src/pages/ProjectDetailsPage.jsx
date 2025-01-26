@@ -1,7 +1,7 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useAsyncError, useNavigate, useParams } from 'react-router-dom';
 import {TaskItem} from '../components/TaskItem';
 import {CommentList} from '../components/CommentList';
-import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar } from 'lucide-react';
+import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar,Trash } from 'lucide-react';
 import { gql } from '@apollo/client';
 import { useQuery,useMutation } from '@apollo/client';
 import { useEffect } from 'react';
@@ -53,15 +53,27 @@ const UPDATEPROJECT = gql`
 `;
 
 
-export const ProjectDetailsPage = () => {
+const DELETEPROJECT = gql`
+  mutation DeleteProject($projectId: Int!) {
+    deleteProject(projectId: $projectId) {
+      id
+    }
+  }
+`;
+
+
+
+
+export const ProjectDetailsPage = ( ) => {
   const { projectId } = useParams();
+  const navigate = useNavigate();
 
   
 
 
   const projectIdInt = parseInt(projectId, 10);
 
-  const { loading, error, data, refetch } = useQuery(GETPROJECTBYID, {
+  const { loading, error, data, refetch } =  useQuery(GETPROJECTBYID, {
     variables: { id: projectIdInt },
   });
 
@@ -69,14 +81,18 @@ export const ProjectDetailsPage = () => {
   const [description, setDescription] = useState('');
 
   useEffect(() => {
+    refetch();
     if (data?.getProject) {
       setProjectname(data.getProject.name);
       setDescription(data.getProject.description);
-    }
-  }, [data]);
+    } 
+    
+  }, [data,setProjectname,setDescription,navigate]);
+
 
   const [createTask] = useMutation(CREATETASK);
   const [updateProject] = useMutation(UPDATEPROJECT);
+  const [deleteProject] = useMutation(DELETEPROJECT);
 
 
   const project = data?.getProject || {};
@@ -122,6 +138,7 @@ export const ProjectDetailsPage = () => {
       });
       console.log("Project name updated");
       refetch();
+
     } catch (error) {
       console.error("Error updating project name:", error.message);
     }
@@ -133,7 +150,19 @@ export const ProjectDetailsPage = () => {
   const handleAddComment = () => {
     alert('TODO: Mutation pour ajouter un nouveau commentaire');
   };
-  let i = 0;
+
+  const handleDeleteProject = async () => {
+    try {
+      await deleteProject({
+        variables: {
+          projectId: projectIdInt,
+        },
+      });
+      console.log("Project deleted");
+    } catch (error) {
+      console.error("Error deleting project:", error.message);
+    }
+  };
 
 
 
@@ -159,9 +188,14 @@ export const ProjectDetailsPage = () => {
               <input className="text-3xl font-bold text-gray-900 mb-2 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre un titre' value={projectname} onChange={(e) => setProjectname(e.target.value)} onBlur={() => modifyProject()} />
               <input className="text-gray-700 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre une description' value={description} onChange={(e) => setDescription(e.target.value)} onBlur={() => modifyProject()} />
             </div>
-            <div className="flex items-center text-sm text-gray-500">
-              <Calendar className="h-4 w-4 mr-1" />
-              <span>Créé le 12 Jan 2024</span>
+            <div className="flex flex-col justify-between">
+              <div className="flex items-center text-sm text-gray-500">
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>Créé le 12 Jan 2024</span> 
+              </div>
+              <Link to="/" className="" onClick={() =>  handleDeleteProject()}>
+              <Trash className='h-5 w-5 text-red-600 cursor-pointer hover:text-red-700' onClick={() =>  handleDeleteProject()} />
+              </Link>
             </div>
           </div>
         </div>
