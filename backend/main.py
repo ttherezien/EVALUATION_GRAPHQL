@@ -22,4 +22,5 @@ async def index():
 schema = Schema(query=Query, mutation=Mutation, subscription=Subscription)
 
 app.add_route("/graphql", GraphQL(schema))
-app.add_websocket_route("/graphql", GraphQL(schema))
+app.add_websocket_route("/subscription", GraphQL(schema))
+

@@ -89,7 +89,7 @@ class Query:
     
     @strawberry.field
     async def projects(self,info:Info) -> List[ProjectType]:
-
+        await get_current_user(info)
         db=get_db()
         projects = db.query(Project).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
@@ -101,6 +101,7 @@ class Query:
     
     @strawberry.field
     async def getProject(self, id: int,info : Info) -> ProjectDetail:
+        await get_current_user(info)
         db = get_db()
         project = db.query(Project).filter(Project.id == id).first()
         
@@ -116,7 +117,8 @@ class Query:
             raise Exception("Project not found")
         
     @strawberry.field
-    async def get_user_by_id(self, id: int) -> UserType:
+    async def get_user_by_id(self, id: int,info : Info) -> UserType:
+        await get_current_user(info)
         db = get_db()
         user = db.query(User).filter(User.id == id).first()
         if not user:
@@ -124,13 +126,15 @@ class Query:
         return UserType(id=user.id, email=user.email)
     
     @strawberry.field
-    async def get_all_projects(self) -> List[ProjectType]:
+    async def get_all_projects(self,info: Info) -> List[ProjectType]:
+        await get_current_user(info)
         db = get_db()
         projects = db.query(Project).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
     
     @strawberry.field
-    async def get_users_by_ids(self, ids: List[int]) -> List[UserType]:
+    async def get_users_by_ids(self, ids: List[int],info:Info) -> List[UserType]:
+        await get_current_user(info)
         db = get_db()
         users = db.query(User).filter(User.id.in_(ids)).all()
         return [UserType(id=user.id, email=user.email) for user in users]
@@ -335,6 +339,17 @@ class Subscription:
             await asyncio.sleep(1)
             
             
+    @strawberry.subscription
+    async def comment_added(self, project_id: int) -> AsyncGenerator[CommentType, None]:
+        print("comment_added")
+        db = get_db()
+        last_comment_id = None
+        while True:
+            comment = db.query(Comment).filter(Comment.project_id == project_id).order_by(Comment.id.desc()).first()
+            if comment and comment.id != last_comment_id:
+                last_comment_id = comment.id
+                yield CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id)
+            await asyncio.sleep(1)
     
 
 

@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { TaskItem } from '../components/TaskItem';
 import { CommentList } from '../components/CommentList';
 import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar, Trash } from 'lucide-react';
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql, useQuery, useMutation,useSubscription } from '@apollo/client';
 import { useEffect, useState } from 'react';
 
 
@@ -66,6 +66,19 @@ const CREATE_COMMENT = gql`
   }
 `;
 
+const COMMENT_ADDED = gql`
+  subscription CommentAdded($projectId: Int!) {
+    commentAdded(projectId: $projectId) {
+      id
+      authorId
+      content
+      projectId
+    }
+  }
+`;
+
+
+
 
 export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
@@ -78,16 +91,26 @@ export const ProjectDetailsPage = () => {
 
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
-  const [tasks, setTasks] = useState([]);
 
+  const { data: commentData } = useSubscription(COMMENT_ADDED, {
+    variables: { projectId: projectIdInt },
+  });
+
+  // Mettre à jour les données du projet si elles changent ou si un commentaire est ajouté
   useEffect(() => {
     if (data?.getProject) {
       setProjectName(data.getProject.name);
       setDescription(data.getProject.description);
-      setTasks(data.getProject.tasks);
     }
-    refetch();
   }, [data]);
+
+  // Refresher les données si un commentaire a été ajouté
+  useEffect(() => {
+    if (commentData?.commentAdded) {
+      console.log('Commentaire ajouté', commentData.commentAdded);
+      refetch();  // Rechargement des données du projet
+    }
+  }, [commentData, refetch]);
 
   const [createTask] = useMutation(CREATE_TASK, { onCompleted: refetch });
   const [updateProject] = useMutation(UPDATE_PROJECT, { onCompleted: refetch });
@@ -99,11 +122,8 @@ export const ProjectDetailsPage = () => {
   if (loading) return <p>Chargement du projet...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
 
-
   const project = data?.getProject || {};
-
   const idUser = localStorage.getItem('id');
-
   return (
     <div>
       <Link 

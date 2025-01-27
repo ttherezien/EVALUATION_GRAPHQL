@@ -69,7 +69,7 @@ export const TaskItem = ({ task, refetchFunction, idOwner }) => {
     }
   });
 
-  const modifyStatut = (status) => {
+  const modifyStatut = () => {
     let newStatus = taskStatus;
     if (taskStatus === 'TODO') {
       newStatus = 'IN_PROGRESS';
@@ -78,7 +78,6 @@ export const TaskItem = ({ task, refetchFunction, idOwner }) => {
     } else if (taskStatus === 'DONE') {
       newStatus = 'TODO';
     }
-    console.log(newStatus);
     setTaskStatus(newStatus);
     modifyTask({
       variables: {
@@ -91,7 +90,6 @@ export const TaskItem = ({ task, refetchFunction, idOwner }) => {
   }
 
   const deleteTask = (taskId) => {
-    console.log("Delete task", taskId);
     deleteTaskgql({
       variables: {
         taskId: taskId
@@ -103,8 +101,6 @@ export const TaskItem = ({ task, refetchFunction, idOwner }) => {
 
   const userId = localStorage.getItem('id');
   const userIdNumber = parseInt(userId, 10);
-  console.log('userId:', userId, 'idOwner:', idOwner, 'userIdNumber:', userIdNumber);
-
 
 
   return (

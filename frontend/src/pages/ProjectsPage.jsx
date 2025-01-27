@@ -39,7 +39,6 @@ export const ProjectsPage = () => {
       refetch();
       if (!localStorage.getItem('token')) navigate('/login');
       if (error) {
-        alert(error.message);
         navigate('/login');
       }
     }
@@ -52,7 +51,7 @@ export const ProjectsPage = () => {
       });
       refetch();
     } catch (err) {
-      alert(err.message);
+      console.log('Erreur lors de la création du projet : ' + err.message);
     }
   };
 

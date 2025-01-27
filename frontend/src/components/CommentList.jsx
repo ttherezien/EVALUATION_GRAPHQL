@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client";
+import { use } from "react";
 
 const GET_USERS_BY_IDS = gql`
   query GetUsersByIds($ids: [Int!]!) {
@@ -9,6 +10,9 @@ const GET_USERS_BY_IDS = gql`
     }
   }
 `;
+
+
+
 
 export const CommentList = ({ comments }) => {
   if (!comments || !comments.length) {
@@ -52,6 +56,8 @@ export const CommentList = ({ comments }) => {
     return acc;
   }, {}) || {};
 
+
+  
   return (
     <div className="space-y-4">
       {comments.map((comment) => {
