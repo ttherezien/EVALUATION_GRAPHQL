@@ -38,7 +38,6 @@ class Comment(Base):
     content = Column(String, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     project_id = Column(Integer, ForeignKey('projects.id'))
-    task_id = Column(Integer, ForeignKey('tasks.id'))
 
 
 

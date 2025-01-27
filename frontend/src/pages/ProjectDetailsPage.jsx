@@ -1,25 +1,21 @@
-import { Link, useAsyncError, useNavigate, useParams } from 'react-router-dom';
-import {TaskItem} from '../components/TaskItem';
-import {CommentList} from '../components/CommentList';
-import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar,Trash } from 'lucide-react';
-import { gql } from '@apollo/client';
-import { useQuery,useMutation } from '@apollo/client';
-import { useEffect } from 'react';
-import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { TaskItem } from '../components/TaskItem';
+import { CommentList } from '../components/CommentList';
+import { PlusCircle, CheckSquare, MessageSquare, ArrowLeft, Calendar, Trash } from 'lucide-react';
+import { gql, useQuery, useMutation } from '@apollo/client';
+import { useEffect, useState } from 'react';
 
 
-const GETPROJECTBYID = gql`
-  query GetProject($id: Int!) { 
+const GET_PROJECT_BY_ID = gql`
+  query GetProject($id: Int!) {
     getProject(id: $id) {
       id
       name
       description
       comments {
+        id
         authorId
         content
-        id
-        projectId
-        taskId
       }
       tasks {
         id
@@ -30,7 +26,7 @@ const GETPROJECTBYID = gql`
   }
 `;
 
-const CREATETASK = gql`
+const CREATE_TASK = gql`
   mutation CreateTask($projectId: Int!, $title: String!, $status: String!) {
     createTask(projectId: $projectId, title: $title, status: $status) {
       id
@@ -40,9 +36,7 @@ const CREATETASK = gql`
   }
 `;
 
-
-
-const UPDATEPROJECT = gql`
+const UPDATE_PROJECT = gql`
   mutation UpdateProject($projectId: Int!, $name: String!, $description: String!) {
     updateProject(projectId: $projectId, name: $name, description: $description) {
       id
@@ -52,8 +46,7 @@ const UPDATEPROJECT = gql`
   }
 `;
 
-
-const DELETEPROJECT = gql`
+const DELETE_PROJECT = gql`
   mutation DeleteProject($projectId: Int!) {
     deleteProject(projectId: $projectId) {
       id
@@ -61,116 +54,53 @@ const DELETEPROJECT = gql`
   }
 `;
 
+const CREATE_COMMENT = gql`
+  mutation CreateComment($projectId: Int!, $content: String!) {
+    createComment(projectId: $projectId, content: $content) {
+      id
+      content
+    }
+  }
+`;
 
 
-
-export const ProjectDetailsPage = ( ) => {
+export const ProjectDetailsPage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-
-  
-
-
   const projectIdInt = parseInt(projectId, 10);
 
-  const { loading, error, data, refetch } =  useQuery(GETPROJECTBYID, {
+  const { loading, error, data, refetch } = useQuery(GET_PROJECT_BY_ID, {
     variables: { id: projectIdInt },
   });
 
-  const [projectname, setProjectname] = useState('');
+  const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    refetch();
     if (data?.getProject) {
-      setProjectname(data.getProject.name);
+      setProjectName(data.getProject.name);
       setDescription(data.getProject.description);
-    } 
-    
-  }, [data,setProjectname,setDescription,navigate]);
-
-
-  const [createTask] = useMutation(CREATETASK);
-  const [updateProject] = useMutation(UPDATEPROJECT);
-  const [deleteProject] = useMutation(DELETEPROJECT);
-
-
-  const project = data?.getProject || {};
-
-  if (loading) {
-    console.log("Loading project details...");
-    return <p>Chargement du projet...</p>;
-  }
-
-  if (error) {
-    console.error("Error fetching project details:", error.message);
-    return <p>Erreur : {error.message}</p>;
-  }
-
-  if (data) {
-    console.log("Fetched project details:", data);
-  }
-
-  const handleAddTask = async () => {
-    try {
-      await createTask({
-        variables: {
-          projectId: projectIdInt,
-          title: 'Nouvelle tâche',
-          status: 'TODO',
-        },
-      });
-      console.log("Task created");
-      refetch();
-    } catch (error) {
-      console.error("Error creating task:", error.message);
+      setTasks(data.getProject.tasks);
     }
-  };
+    refetch();
+  }, [data]);
 
-  const modifyProject = async () => {
-    try {
-      await updateProject({
-        variables: {
-          projectId: projectIdInt,
-          name: projectname,
-          description: description,
-        },
-      });
-      console.log("Project name updated");
-      refetch();
+  const [createTask] = useMutation(CREATE_TASK, { onCompleted: refetch });
+  const [updateProject] = useMutation(UPDATE_PROJECT, { onCompleted: refetch });
+  const [deleteProject] = useMutation(DELETE_PROJECT, {
+    onCompleted: () => navigate('/'),
+  });
+  const [createComment] = useMutation(CREATE_COMMENT, { onCompleted: refetch });
 
-    } catch (error) {
-      console.error("Error updating project name:", error.message);
-    }
-  };
-    
-
-
+  if (loading) return <p>Chargement du projet...</p>;
+  if (error) return <p>Erreur : {error.message}</p>;
 
   const handleAddComment = () => {
-    alert('TODO: Mutation pour ajouter un nouveau commentaire');
-  };
+    const content = prompt('Ajouter un commentaire');
+  }
 
-  const handleDeleteProject = async () => {
-    try {
-      await deleteProject({
-        variables: {
-          projectId: projectIdInt,
-        },
-      });
-      console.log("Project deleted");
-    } catch (error) {
-      console.error("Error deleting project:", error.message);
-    }
-  };
-
-
-
-  
-
-
-
-
+  const project = data?.getProject || {};
   return (
     <div>
       <Link 
@@ -185,17 +115,32 @@ export const ProjectDetailsPage = ( ) => {
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <div className="flex justify-between items-start mb-4">
             <div className='flex flex-col'>
-              <input className="text-3xl font-bold text-gray-900 mb-2 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre un titre' value={projectname} onChange={(e) => setProjectname(e.target.value)} onBlur={() => modifyProject()} />
-              <input className="text-gray-700 border border-white rounded-lg hover:border-gray-500 p-1" placeholder='Veuillez mettre une description' value={description} onChange={(e) => setDescription(e.target.value)} onBlur={() => modifyProject()} />
+              <input
+                className="text-3xl font-bold text-gray-900 mb-2 border border-white rounded-lg hover:border-gray-500 p-1"
+                placeholder='Veuillez mettre un titre'
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)} 
+                onBlur={() => updateProject({ variables: { projectId: projectIdInt, name: projectName, description } })} 
+              />
+              <input 
+                className="text-gray-700 border border-white rounded-lg hover:border-gray-500 p-1" 
+                placeholder='Veuillez mettre une description' 
+                value={description} 
+                onChange={(e) => setProjectName(e.target.value)} 
+                onBlur={() => updateProject({ variables: { projectId: projectIdInt, name: projectName, description } })} 
+              />
             </div>
             <div className="flex flex-col justify-between">
               <div className="flex items-center text-sm text-gray-500">
                 <Calendar className="h-4 w-4 mr-1" />
                 <span>Créé le 12 Jan 2024</span> 
               </div>
-              <Link to="/" className="" onClick={() =>  handleDeleteProject()}>
-              <Trash className='h-5 w-5 text-red-600 cursor-pointer hover:text-red-700' onClick={() =>  handleDeleteProject()} />
-              </Link>
+              
+              <Trash
+               className='h-5 w-5 text-red-600 cursor-pointer hover:text-red-700'
+               onClick={() => deleteProject({ variables: { projectId: projectIdInt } })} 
+              />
+              
             </div>
           </div>
         </div>
@@ -207,8 +152,8 @@ export const ProjectDetailsPage = ( ) => {
               <h3 className="text-xl font-semibold text-gray-900">Tâches</h3>
             </div>
             <button 
-              onClick={handleAddTask}
               className="inline-flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+              onClick={() => createTask({ variables: { projectId: projectIdInt, title: 'Nouvelle tâche', status: 'TODO' } })} 
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Ajouter une tâche
@@ -230,7 +175,7 @@ export const ProjectDetailsPage = ( ) => {
               <h3 className="text-xl font-semibold text-gray-900">Commentaires</h3>
             </div>
             <button 
-              onClick={handleAddComment}
+              onClick={() => createComment({ variables: { projectId: projectIdInt, content: prompt('Ajouter un commentaire') } })}
               className="inline-flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
             >
               <PlusCircle className="h-4 w-4 mr-2" />

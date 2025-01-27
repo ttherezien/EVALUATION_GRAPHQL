@@ -17,6 +17,8 @@ export const SignupPage = () => {
     mutation signup($email: String!, $password: String!) {
       signup(email: $email, password: $password) {
         token
+        email
+        id
       }
     }
   `;
@@ -31,6 +33,8 @@ export const SignupPage = () => {
       });
 
       localStorage.setItem('token', data.signup.token);
+      localStorage.setItem('email', data.signup.email);
+      localStorage.setItem('id', data.signup.id);
 
       if (localStorage.getItem('token') !== null) {
         navigate('/');

@@ -41,8 +41,7 @@ class CommentType:
     id: int
     content: str
     author_id: int
-    project_id: int
-    task_id: int   
+    project_id: int  
    
  
 @strawberry.type
@@ -89,9 +88,9 @@ class Query:
     
     @strawberry.field
     async def projects(self,info:Info) -> List[ProjectType]:
-        user = await get_current_user(info)
+
         db=get_db()
-        projects = db.query(Project).filter(Project.owner_id == user.id).all()
+        projects = db.query(Project).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
     
     @strawberry.field
@@ -112,11 +111,27 @@ class Query:
             owner = db.query(User).filter(User.id == project.owner_id).first()
             tasks = db.query(Task).filter(Task.project_id == project.id).all()
             comments = db.query(Comment).filter(Comment.project_id == project.id).all()
-            return ProjectDetail(id=project.id, name=project.name, description=project.description, owner=UserType(id=owner.id, email=owner.email), tasks=[TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id) for task in tasks], comments=[CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) for comment in comments])
+            return ProjectDetail(id=project.id, name=project.name, description=project.description, owner=UserType(id=owner.id, email=owner.email), tasks=[TaskType(id=task.id, title=task.title, status=task.status, project_id=task.project_id) for task in tasks], comments=[CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id) for comment in comments])
         else:
             raise Exception("Project not found")
-
-
+        
+    @strawberry.field
+    async def get_user_by_id(self, id: int) -> UserType:
+        db = get_db()
+        user = db.query(User).filter(User.id == id).first()
+        if not user:
+            raise Exception(f"User with ID {id} not found")
+        return UserType(id=user.id, email=user.email)
+    
+    @strawberry.field
+    async def get_all_projects(self) -> List[ProjectType]:
+        db = get_db()
+        projects = db.query(Project).all()
+        return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
+    
+    
+    
+    
 @strawberry.type
 class Mutation:
     @strawberry.mutation
@@ -143,7 +158,7 @@ class Mutation:
             payload = {
             'id': user.id,
             'email': user.email,
-            'exp': datetime.utcnow() + timedelta(hours=1)
+            'exp': datetime.utcnow() + timedelta(seconds=3600)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
             db.commit()
@@ -272,19 +287,16 @@ class Mutation:
         return ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id)
         
     @strawberry.mutation
-    async def create_comment(self, project_id: int, task_id: int, content: str, info: Info) -> CommentType:
+    async def create_comment(self, project_id: int, content: str, info: Info) -> CommentType:
         user = await get_current_user(info)
         db = get_db()
         project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
             raise Exception("Project not found")
-        task = db.query(Task).filter(Task.id == task_id).first()
-        if not task:
-            raise Exception("Task not found")
-        comment = Comment(content=content, author_id=user.id, project_id=project_id, task_id=task_id)
+        comment = Comment(content=content, author_id=user.id, project_id=project_id)
         db.add(comment)
         db.commit()
-        return CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id, task_id=comment.task_id) 
+        return CommentType(id=comment.id, content=comment.content, author_id=comment.author_id, project_id=comment.project_id) 
     
 
 

@@ -10,6 +10,8 @@ export const LoginPage = () => {
     mutation login($email: String!, $password: String!) {
       login(email: $email, password: $password) {
         token
+        email
+        id
       }
    }`;
 
@@ -32,6 +34,8 @@ export const LoginPage = () => {
       });
 
       localStorage.setItem('token', data.login.token);
+      localStorage.setItem('email', data.login.email);
+      localStorage.setItem('id', data.login.id);
 
       if (localStorage.getItem('token') !== null) {
         navigate('/');
