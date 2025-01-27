@@ -52,6 +52,7 @@ class ProjectDetail:
     owner: UserType
     tasks: List[TaskType]
     comments: List[CommentType]
+    
 
 
 def verify_token(token: str):
@@ -100,14 +101,13 @@ class Query:
     
     @strawberry.field
     async def getProject(self, id: int,info : Info) -> ProjectDetail:
-        user = await get_current_user(info)
         db = get_db()
         project = db.query(Project).filter(Project.id == id).first()
         
         if not project:
             raise Exception(f"Project with ID {id} not found")
 
-        if project and (project.owner_id == user.id):
+        if project and (project.owner_id):
             owner = db.query(User).filter(User.id == project.owner_id).first()
             tasks = db.query(Task).filter(Task.project_id == project.id).all()
             comments = db.query(Comment).filter(Comment.project_id == project.id).all()
@@ -128,6 +128,12 @@ class Query:
         db = get_db()
         projects = db.query(Project).all()
         return [ProjectType(id=project.id, name=project.name, description=project.description, owner_id=project.owner_id) for project in projects]
+    
+    @strawberry.field
+    async def get_users_by_ids(self, ids: List[int]) -> List[UserType]:
+        db = get_db()
+        users = db.query(User).filter(User.id.in_(ids)).all()
+        return [UserType(id=user.id, email=user.email) for user in users]
     
     
     
@@ -182,7 +188,9 @@ class Mutation:
         db = get_db()
         project = db.query(Project).filter(Project.id == project_id).first()
         if not project:
-            raise Exception("Project not found or you do not have permission to add tasks to this project")
+            raise Exception("Project not found")
+        if project.owner_id != user.id:
+            raise Exception("You do not have permission to add tasks to this project")
         task = Task(title=title, status=status, project_id=project_id)
         db.add(task)
         db.commit()

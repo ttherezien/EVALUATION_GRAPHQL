@@ -25,7 +25,7 @@ const DeleteTask = gql`
 
 
 
-export const TaskItem = ({ task, refetchFunction }) => {
+export const TaskItem = ({ task, refetchFunction, idOwner }) => {
   const statusConfig = {
     TODO: {
       icon: Circle,
@@ -101,8 +101,9 @@ export const TaskItem = ({ task, refetchFunction }) => {
     });
   }
 
-
-
+  const userId = localStorage.getItem('id');
+  const userIdNumber = parseInt(userId, 10);
+  console.log('userId:', userId, 'idOwner:', idOwner, 'userIdNumber:', userIdNumber);
 
 
 
@@ -110,7 +111,13 @@ export const TaskItem = ({ task, refetchFunction }) => {
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-all duration-200 hover:bg-gray-700">
       <div className="flex items-center space-x-3">
         <StatusIcon className={`h-5 w-5 ${config.color} cursor-pointer hover:scale-110 transition-transform`} onClick={() => modifyStatut()} />
-        <input className="text-gray-900 font-medium border border-white rounded-lg hover:border-gray-500 p-1" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} onBlur={() => modifyTask()} />
+        <input 
+          disabled={userIdNumber !== idOwner}
+          className="text-gray-900 font-medium border border-white rounded-lg hover:border-gray-500 p-1" 
+          value={taskTitle} 
+          onChange={(e) => setTaskTitle(e.target.value)} 
+          onBlur={() => modifyTask()} 
+        />
       </div>
 
       <span className={`px-3 py-1 text-sm font-medium rounded-full cursor-pointer text-white hover:bg-red-100 hover:text-red-700`} onClick={() => deleteTask(task.id)}>

@@ -1,9 +1,9 @@
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client";
 
-const GET_USER_BY_ID = gql`
-  query GetUserById($id: ID!) {
-    getUserById(id: $id) {
+const GET_USERS_BY_IDS = gql`
+  query GetUsersByIds($ids: [Int!]!) {
+    getUsersByIds(ids: $ids) {
       id
       email
     }
@@ -19,15 +19,43 @@ export const CommentList = ({ comments }) => {
     );
   }
 
+  // Extraire tous les IDs uniques des auteurs
+  const authorIds = [...new Set(comments.map((c) => c.authorId).filter(Boolean))];
+
+  // Récupérer les utilisateurs en une seule requête
+  const { data, loading, error } = useQuery(GET_USERS_BY_IDS, {
+    variables: { ids: authorIds },
+    skip: authorIds.length === 0, // Évite la requête si aucun ID
+  });
+
+  // Si la requête est en cours de chargement, on affiche un message
+  if (loading) {
+    return (
+      <p className="text-center text-gray-500 italic">
+        Chargement des commentaires...
+      </p>
+    );
+  }
+
+  // Si la requête a échoué, on affiche un message d'erreur
+  if (error) {
+    return (
+      <p className="text-center text-red-500 italic">
+        Une erreur est survenue lors du chargement des utilisateurs.
+      </p>
+    );
+  }
+
+  // Créer un dictionnaire { id: email }
+  const authorMap = data?.getUsersByIds.reduce((acc, user) => {
+    acc[user.id] = user.email;
+    return acc;
+  }, {}) || {};
+
   return (
     <div className="space-y-4">
       {comments.map((comment) => {
-        const { data, loading, error } = useQuery(GET_USER_BY_ID, {
-          variables: { id: comment.authorId },
-          skip: !comment.authorId, // Évite la requête si l'auteur n'a pas d'ID
-        });
-
-        const authorEmail = data?.getUserById?.email || "Unknown";
+        const authorEmail = authorMap[comment.authorId] || "Unknown";
 
         return (
           <div
@@ -39,7 +67,7 @@ export const CommentList = ({ comments }) => {
                 {authorEmail[0]?.toUpperCase() || ""}
               </div>
               <div className="text-sm font-medium text-gray-600">
-                {loading ? "Chargement..." : error ? "Erreur" : authorEmail}
+                {authorEmail}
               </div>
             </div>
             <div className="text-gray-800 pl-10">{comment.content}</div>

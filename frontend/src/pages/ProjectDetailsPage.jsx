@@ -12,6 +12,9 @@ const GET_PROJECT_BY_ID = gql`
       id
       name
       description
+      owner {
+        id
+      }
       comments {
         id
         authorId
@@ -96,11 +99,11 @@ export const ProjectDetailsPage = () => {
   if (loading) return <p>Chargement du projet...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
 
-  const handleAddComment = () => {
-    const content = prompt('Ajouter un commentaire');
-  }
 
   const project = data?.getProject || {};
+
+  const idUser = localStorage.getItem('id');
+
   return (
     <div>
       <Link 
@@ -115,7 +118,8 @@ export const ProjectDetailsPage = () => {
         <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           <div className="flex justify-between items-start mb-4">
             <div className='flex flex-col'>
-              <input
+              <input 
+                disabled={idUser != project.owner.id}
                 className="text-3xl font-bold text-gray-900 mb-2 border border-white rounded-lg hover:border-gray-500 p-1"
                 placeholder='Veuillez mettre un titre'
                 value={projectName}
@@ -123,10 +127,11 @@ export const ProjectDetailsPage = () => {
                 onBlur={() => updateProject({ variables: { projectId: projectIdInt, name: projectName, description } })} 
               />
               <input 
+                disabled={idUser != project.owner.id}
                 className="text-gray-700 border border-white rounded-lg hover:border-gray-500 p-1" 
                 placeholder='Veuillez mettre une description' 
                 value={description} 
-                onChange={(e) => setProjectName(e.target.value)} 
+                onChange={(e) => setDescription(e.target.value)} 
                 onBlur={() => updateProject({ variables: { projectId: projectIdInt, name: projectName, description } })} 
               />
             </div>
@@ -135,12 +140,12 @@ export const ProjectDetailsPage = () => {
                 <Calendar className="h-4 w-4 mr-1" />
                 <span>Créé le 12 Jan 2024</span> 
               </div>
-              
+              { idUser ==  project.owner.id &&
               <Trash
                className='h-5 w-5 text-red-600 cursor-pointer hover:text-red-700'
                onClick={() => deleteProject({ variables: { projectId: projectIdInt } })} 
               />
-              
+            }
             </div>
           </div>
         </div>
@@ -151,18 +156,23 @@ export const ProjectDetailsPage = () => {
               <CheckSquare className="h-5 w-5 text-indigo-600" />
               <h3 className="text-xl font-semibold text-gray-900">Tâches</h3>
             </div>
-            <button 
+            
+            {  idUser == project.owner.id &&
+              
+              <button 
               className="inline-flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
               onClick={() => createTask({ variables: { projectId: projectIdInt, title: 'Nouvelle tâche', status: 'TODO' } })} 
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Ajouter une tâche
             </button>
+
+}
           </div>
           <ul className="space-y-3">
             {project.tasks.map((task) => (
               <li key={task.id}>
-                <TaskItem task={task} refetchFunction={refetch} />
+                <TaskItem task={task} refetchFunction={refetch} idOwner={project.owner.id} />
               </li>
             ))}
           </ul>
