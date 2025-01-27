@@ -68,7 +68,7 @@ export const ProjectsPage = () => {
           <h2 className="text-2xl font-bold text-gray-900">Mes Projets</h2>
           <button 
             onClick={handleNewProject}
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white roun</div>ded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
             Nouveau Projet
