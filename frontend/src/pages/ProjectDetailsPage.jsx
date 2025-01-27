@@ -91,6 +91,7 @@ export const ProjectDetailsPage = () => {
 
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
+  const [comments, setComments] = useState([]); // État local pour les commentaires
 
   const { data: commentData } = useSubscription(COMMENT_ADDED, {
     variables: { projectId: projectIdInt },
@@ -101,16 +102,28 @@ export const ProjectDetailsPage = () => {
     if (data?.getProject) {
       setProjectName(data.getProject.name);
       setDescription(data.getProject.description);
+      setComments(data.getProject.comments); // No need to map here
     }
   }, [data]);
-
-  // Refresher les données si un commentaire a été ajouté
+  
   useEffect(() => {
     if (commentData?.commentAdded) {
-      console.log('Commentaire ajouté', commentData.commentAdded);
-      refetch();  // Rechargement des données du projet
+      // Vérifier si le commentaire ajouté est déjà dans la liste
+      setComments((prevComments) => {
+        const isNewComment = !prevComments.some(
+          (comment) => comment.id === commentData.commentAdded.id
+        );
+        
+        if (isNewComment) {
+          // Ajouter le commentaire uniquement s'il est nouveau
+          return [...prevComments, commentData.commentAdded];
+        }
+        
+        return prevComments; // Sinon, on ne modifie pas l'état
+      });
     }
-  }, [commentData, refetch]);
+  }, [commentData]);
+  
 
   const [createTask] = useMutation(CREATE_TASK, { onCompleted: refetch });
   const [updateProject] = useMutation(UPDATE_PROJECT, { onCompleted: refetch });
@@ -124,6 +137,13 @@ export const ProjectDetailsPage = () => {
 
   const project = data?.getProject || {};
   const idUser = localStorage.getItem('id');
+
+
+
+
+
+
+
   return (
     <div>
       <Link 
@@ -212,7 +232,7 @@ export const ProjectDetailsPage = () => {
               Ajouter un commentaire
             </button>
           </div>
-          <CommentList comments={project.comments} />
+          <CommentList comments={comments} />
         </div>
       </div>
     </div>
